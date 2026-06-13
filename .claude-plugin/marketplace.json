@@ -1,17 +1,18 @@
 {
+  "_comment": "Marketplace manifest so the repo can be installed with `/plugin marketplace add apeabody007/digits`. `source: ./` means the plugin lives at the repo root (where plugin.json and .mcp.json sit). Keep version in sync with .claude-plugin/plugin.json and SERVER_VERSION in server/digits_server.py.",
   "name": "digits",
   "owner": {
     "name": "Aaron Peabody"
   },
   "metadata": {
     "description": "Digits — connect Claude to Apple Numbers",
-    "version": "0.4.0"
+    "version": "0.5.0"
   },
   "plugins": [
     {
       "name": "digits",
       "source": "./",
-      "description": "Zero-dependency MCP tools to read and edit live Apple Numbers spreadsheets (cells, formulas, rows, columns, sheets, CSV/PDF/Excel export) via AppleScript, plus a budget-review skill."
+      "description": "Zero-dependency MCP tools to read and edit live Apple Numbers spreadsheets (cells, formulas, rows, columns, sheets, CSV/PDF/Excel export) via AppleScript, plus budget-review, monthly-report, and data-cleanup skills."
     }
   ]
 }

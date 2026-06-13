@@ -3,7 +3,43 @@
 All notable changes to Digits are documented here. This project follows
 [Semantic Versioning](https://semver.org/).
 
+## [0.5.0] — 2026-06-13
+
+No new MCP tools — this release is about making the project easier to trust,
+adopt, and extend.
+
+### Added
+- **Test suite** (`tests/test_digits_server.py`): 27 stdlib-`unittest` tests
+  that mock the AppleScript bridge (`digits_server._run`), so they run on any
+  machine — including non-macOS CI — without Numbers. Coverage spans the
+  helper functions, AppleScript generation, table parsing, argument
+  validation, error mapping, and the MCP JSON-RPC surface. Run with
+  `python3 -m unittest discover -s tests` (or `pytest tests/`).
+- **Command-line flags** when running `digits_server.py` directly:
+  `--version`, `--health-check` (exits non-zero on a bad setup),
+  `--list-tools`, and `--help`. With no arguments it still speaks MCP over
+  stdio as before.
+- **Two new bundled skills:**
+  - `monthly-report` — roll raw rows up into a per-category summary with
+    month-over-month deltas on its own sheet, with optional PDF/Excel export.
+  - `data-cleanup` — profile a table for duplicates, blanks, inconsistent
+    labels, and text in number columns, then fix it safely (batched value
+    edits, bottom-up row deletion) after user sign-off.
+
+### Changed
+- **README** expanded with a full per-tool parameter reference (collapsible,
+  with request/response examples), a "Verify your setup" section for the new
+  CLI flags, a "Performance & atomicity" section explaining the per-call
+  `osascript` model and the batch-everything-in-one-`set_cells` guidance, a
+  workaround for each documented limitation, and a Development section.
+- **Config files commented:** `.mcp.json`, `.claude-plugin/plugin.json`, and
+  `.claude-plugin/marketplace.json` each carry an `_comment` explaining their
+  purpose and the need to keep versions in sync.
+
 ## [0.4.0] — 2026-06-13
+
+Added a second wave of editing tools so Digits can manage spreadsheet
+structure, not just cell contents.
 
 ### Added
 - **Sheet management:** `numbers_add_sheet`, `numbers_rename_sheet`,

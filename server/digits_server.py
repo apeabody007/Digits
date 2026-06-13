@@ -31,7 +31,7 @@ import sys
 from typing import Any, Callable
 
 SERVER_NAME = "digits"
-SERVER_VERSION = "0.4.0"
+SERVER_VERSION = "0.5.0"
 PROTOCOL_VERSION = "2024-11-05"
 
 _RS = chr(30)  # record separator: between rows / list items
@@ -921,5 +921,62 @@ def main() -> None:
         _handle(msg)
 
 
-if __name__ == "__main__":
+# ---------------------------------------------------------------------------
+# Command-line entry point
+# ---------------------------------------------------------------------------
+#
+# With no arguments the server speaks MCP over stdio (the normal mode used by
+# Claude). The flags below are for humans running the file by hand to confirm
+# their install works before wiring it into an MCP client.
+
+_USAGE = f"""\
+Digits {SERVER_VERSION} — connect Claude to Apple Numbers.
+
+Usage:
+  python3 digits_server.py                 Run the MCP server (stdio). Default.
+  python3 digits_server.py --version       Print the version and exit.
+  python3 digits_server.py --health-check  Diagnose the setup and exit.
+  python3 digits_server.py --list-tools    List the available tools and exit.
+  python3 digits_server.py --help          Show this message and exit.
+
+Normally you don't run this directly — an MCP client (Claude Desktop, Claude
+Code, Cowork) launches it for you. See the README for client configuration.
+"""
+
+
+def _cli(argv: list[str]) -> int:
+    """Handle one-shot command-line flags. Returns a process exit code."""
+    arg = argv[0] if argv else ""
+
+    if arg in ("-h", "--help"):
+        print(_USAGE)
+        return 0
+
+    if arg in ("-V", "--version"):
+        print(f"digits {SERVER_VERSION}")
+        return 0
+
+    if arg == "--health-check":
+        report = health_check({})
+        print(json.dumps(report, indent=2))
+        return 0 if report.get("status") == "ok" else 1
+
+    if arg == "--list-tools":
+        for name, (desc, _schema_def, _handler) in TOOLS.items():
+            summary = " ".join(desc.split())
+            if len(summary) > 70:
+                summary = summary[:67] + "..."
+            print(f"{name:<26} {summary}")
+        return 0
+
+    if arg.startswith("-"):
+        sys.stderr.write(f"Unknown option: {arg}\n\n{_USAGE}")
+        return 2
+
+    # No recognized flag: run the MCP stdio server.
     main()
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(_cli(sys.argv[1:]))
