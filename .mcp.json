@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "digits": {
+      "command": "python3",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/server/digits_server.py"]
+    }
+  }
+}

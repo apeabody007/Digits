@@ -1,0 +1,20 @@
+{
+  "name": "digits",
+  "version": "0.3.0",
+  "description": "Digits — connect Claude to Apple Numbers. Zero-dependency MCP tools to read and edit live Numbers spreadsheets (cells, formulas, rows, sheets, CSV import/export) via AppleScript, plus a budget-review skill.",
+  "author": {
+    "name": "Aaron Peabody"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/apeabody007/digits",
+  "repository": "https://github.com/apeabody007/digits",
+  "keywords": [
+    "apple-numbers",
+    "numbers",
+    "spreadsheet",
+    "macos",
+    "applescript",
+    "mcp",
+    "budget"
+  ]
+}
