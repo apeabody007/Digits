@@ -31,7 +31,7 @@ import sys
 from typing import Any, Callable
 
 SERVER_NAME = "digits"
-SERVER_VERSION = "0.3.0"
+SERVER_VERSION = "0.4.0"
 PROTOCOL_VERSION = "2024-11-05"
 
 _RS = chr(30)  # record separator: between rows / list items
@@ -365,6 +365,158 @@ def export_csv(args: dict) -> str:
     return text
 
 
+def _doc_ref(document: str | None) -> str:
+    return f"document {_q(document)}" if document else "front document"
+
+
+def add_sheet(args: dict) -> str:
+    doc = _doc_ref(args.get("document"))
+    name = args.get("name")
+    name_line = f"\t\tset name of ns to {_q(name)}\n" if name else ""
+    out = _run(
+        'tell application "Numbers"\n'
+        f"\ttell {doc}\n"
+        "\t\tset ns to make new sheet\n"
+        + name_line +
+        "\t\treturn name of ns\n"
+        "\tend tell\n"
+        "end tell"
+    )
+    return f"Added sheet {out!r}."
+
+
+def rename_sheet(args: dict) -> str:
+    doc = _doc_ref(args.get("document"))
+    old, new = args["name"], args["new_name"]
+    _run(
+        'tell application "Numbers"\n'
+        f"\tset name of sheet {_q(old)} of {doc} to {_q(new)}\n"
+        "end tell"
+    )
+    return f"Renamed sheet {old!r} to {new!r}."
+
+
+def delete_sheet(args: dict) -> str:
+    doc = _doc_ref(args.get("document"))
+    name = args["name"]
+    _run(
+        'tell application "Numbers"\n'
+        f"\tdelete sheet {_q(name)} of {doc}\n"
+        "end tell"
+    )
+    return f"Deleted sheet {name!r}."
+
+
+def insert_row(args: dict) -> str:
+    after = int(args["after_row"])
+    count = int(args.get("count", 1))
+    if not 1 <= count <= 100:
+        raise ToolError("count must be between 1 and 100.")
+    tbl = _target(args.get("document"), args.get("sheet"), args.get("table"))
+    out = _run(
+        'tell application "Numbers"\n'
+        f"\ttell {tbl}\n"
+        f"\t\trepeat {count} times\n"
+        f"\t\t\tmake new row at after row {after}\n"
+        "\t\tend repeat\n"
+        "\t\treturn row count\n"
+        "\tend tell\n"
+        "end tell"
+    )
+    return f"Inserted {count} row(s) after row {after}; table now has {out} rows."
+
+
+def delete_row(args: dict) -> str:
+    row = int(args["row"])
+    count = int(args.get("count", 1))
+    if not 1 <= count <= 100:
+        raise ToolError("count must be between 1 and 100.")
+    tbl = _target(args.get("document"), args.get("sheet"), args.get("table"))
+    out = _run(
+        'tell application "Numbers"\n'
+        f"\ttell {tbl}\n"
+        f"\t\trepeat {count} times\n"
+        f"\t\t\tremove row {row}\n"
+        "\t\tend repeat\n"
+        "\t\treturn row count\n"
+        "\tend tell\n"
+        "end tell"
+    )
+    return f"Deleted {count} row(s) starting at row {row}; table now has {out} rows."
+
+
+def insert_column(args: dict) -> str:
+    after = int(args["after_column"])
+    count = int(args.get("count", 1))
+    if not 1 <= count <= 26:
+        raise ToolError("count must be between 1 and 26.")
+    tbl = _target(args.get("document"), args.get("sheet"), args.get("table"))
+    out = _run(
+        'tell application "Numbers"\n'
+        f"\ttell {tbl}\n"
+        f"\t\trepeat {count} times\n"
+        f"\t\t\tmake new column at after column {after}\n"
+        "\t\tend repeat\n"
+        "\t\treturn column count\n"
+        "\tend tell\n"
+        "end tell"
+    )
+    return f"Inserted {count} column(s) after column {after}; table now has {out} columns."
+
+
+def delete_column(args: dict) -> str:
+    column = int(args["column"])
+    count = int(args.get("count", 1))
+    if not 1 <= count <= 26:
+        raise ToolError("count must be between 1 and 26.")
+    tbl = _target(args.get("document"), args.get("sheet"), args.get("table"))
+    out = _run(
+        'tell application "Numbers"\n'
+        f"\ttell {tbl}\n"
+        f"\t\trepeat {count} times\n"
+        f"\t\t\tremove column {column}\n"
+        "\t\tend repeat\n"
+        "\t\treturn column count\n"
+        "\tend tell\n"
+        "end tell"
+    )
+    return f"Deleted {count} column(s) starting at column {column}; table now has {out} columns."
+
+
+_EXPORT_FORMATS = {
+    "pdf": "PDF",
+    "excel": "Microsoft Excel",
+    "xlsx": "Microsoft Excel",
+    "csv": "CSV",
+}
+
+
+def export_document(args: dict) -> str:
+    doc = _doc_ref(args.get("document"))
+    path = args["path"]
+    fmt = str(args.get("format", "pdf")).lower()
+    if fmt not in _EXPORT_FORMATS:
+        raise ToolError('format must be one of: pdf, excel, csv.')
+    enum = _EXPORT_FORMATS[fmt]
+    _run(
+        'tell application "Numbers"\n'
+        f"\texport {doc} to (POSIX file {_q(path)}) as {enum}\n"
+        "end tell"
+    )
+    return f"Exported to {path} as {enum}."
+
+
+def save_as(args: dict) -> str:
+    doc = _doc_ref(args.get("document"))
+    path = args["path"]
+    _run(
+        'tell application "Numbers"\n'
+        f"\tsave {doc} in (POSIX file {_q(path)})\n"
+        "end tell"
+    )
+    return f"Saved to {path}."
+
+
 def health_check(args: dict) -> dict[str, Any]:
     import platform
     import shutil
@@ -571,6 +723,126 @@ TOOLS: dict[str, tuple[str, dict, Callable[[dict], Any]]] = {
         "when any other tool fails unexpectedly.",
         _schema({}),
         health_check,
+    ),
+    "numbers_add_sheet": (
+        "Add a new sheet (tab) to a document. Appends after the existing "
+        "sheets. Optionally name it. Returns the new sheet's name. Note: "
+        "Numbers' scripting cannot duplicate a sheet's contents, so new "
+        "sheets start blank.",
+        _schema(
+            {
+                "document": _DOC,
+                "name": {"type": "string", "description": "Name for the new sheet (optional)"},
+            }
+        ),
+        add_sheet,
+    ),
+    "numbers_rename_sheet": (
+        "Rename a sheet (tab).",
+        _schema(
+            {
+                "name": {"type": "string", "description": "Current sheet name"},
+                "new_name": {"type": "string", "description": "New sheet name"},
+                "document": _DOC,
+            },
+            ["name", "new_name"],
+        ),
+        rename_sheet,
+    ),
+    "numbers_delete_sheet": (
+        "Delete a sheet (tab) by name. A document must keep at least one sheet.",
+        _schema(
+            {
+                "name": {"type": "string", "description": "Name of the sheet to delete"},
+                "document": _DOC,
+            },
+            ["name"],
+        ),
+        delete_sheet,
+    ),
+    "numbers_insert_row": (
+        "Insert blank row(s) into a table after a given row index (1-based).",
+        _schema(
+            {
+                "after_row": {"type": "integer", "description": "Insert after this row index (1-based)"},
+                "count": {"type": "integer", "description": "How many rows to insert (1–100)", "default": 1},
+                "document": _DOC,
+                "sheet": _SHEET,
+                "table": _TABLE,
+            },
+            ["after_row"],
+        ),
+        insert_row,
+    ),
+    "numbers_delete_row": (
+        "Delete row(s) from a table starting at a given row index (1-based).",
+        _schema(
+            {
+                "row": {"type": "integer", "description": "First row to delete (1-based)"},
+                "count": {"type": "integer", "description": "How many rows to delete (1–100)", "default": 1},
+                "document": _DOC,
+                "sheet": _SHEET,
+                "table": _TABLE,
+            },
+            ["row"],
+        ),
+        delete_row,
+    ),
+    "numbers_insert_column": (
+        "Insert blank column(s) into a table after a given column index (1-based).",
+        _schema(
+            {
+                "after_column": {"type": "integer", "description": "Insert after this column index (1-based)"},
+                "count": {"type": "integer", "description": "How many columns to insert (1–26)", "default": 1},
+                "document": _DOC,
+                "sheet": _SHEET,
+                "table": _TABLE,
+            },
+            ["after_column"],
+        ),
+        insert_column,
+    ),
+    "numbers_delete_column": (
+        "Delete column(s) from a table starting at a given column index (1-based).",
+        _schema(
+            {
+                "column": {"type": "integer", "description": "First column to delete (1-based)"},
+                "count": {"type": "integer", "description": "How many columns to delete (1–26)", "default": 1},
+                "document": _DOC,
+                "sheet": _SHEET,
+                "table": _TABLE,
+            },
+            ["column"],
+        ),
+        delete_column,
+    ),
+    "numbers_export": (
+        "Export a whole document to a file as PDF, Excel (.xlsx), or CSV. "
+        "Numbers does the conversion natively.",
+        _schema(
+            {
+                "path": {"type": "string", "description": "Absolute POSIX path for the output file"},
+                "format": {
+                    "type": "string",
+                    "description": "Output format: pdf, excel, or csv",
+                    "enum": ["pdf", "excel", "csv"],
+                },
+                "document": _DOC,
+            },
+            ["path", "format"],
+        ),
+        export_document,
+    ),
+    "numbers_save_as": (
+        "Save a document to a specific .numbers file path on disk.",
+        _schema(
+            {
+                "path": {"type": "string", "description": "Absolute POSIX path for the .numbers file"},
+                "document": _DOC,
+            },
+            ["path"],
+        ),
+        save_as,
     ),
 }
 

@@ -5,13 +5,13 @@
   },
   "metadata": {
     "description": "Digits — connect Claude to Apple Numbers",
-    "version": "0.3.0"
+    "version": "0.4.0"
   },
   "plugins": [
     {
       "name": "digits",
       "source": "./",
-      "description": "Zero-dependency MCP tools to read and edit live Apple Numbers spreadsheets (cells, formulas, rows, sheets, CSV import/export) via AppleScript, plus a budget-review skill."
+      "description": "Zero-dependency MCP tools to read and edit live Apple Numbers spreadsheets (cells, formulas, rows, columns, sheets, CSV/PDF/Excel export) via AppleScript, plus a budget-review skill."
     }
   ]
 }

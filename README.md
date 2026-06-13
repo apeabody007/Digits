@@ -48,6 +48,11 @@ point.)
 | `numbers_import_csv` | CSV file or raw text → new Numbers document, parsed natively |
 | `numbers_export_csv` | Any table → CSV text or file |
 | `numbers_health_check` | Diagnose setup: Numbers present, automation permission, etc. |
+| `numbers_add_sheet` / `numbers_rename_sheet` / `numbers_delete_sheet` | Manage sheets (tabs) |
+| `numbers_insert_row` / `numbers_delete_row` | Insert/delete rows at an index |
+| `numbers_insert_column` / `numbers_delete_column` | Insert/delete columns at an index |
+| `numbers_export` | Export the document as PDF, Excel (.xlsx), or CSV |
+| `numbers_save_as` | Save to a specific .numbers path |
 
 All tools default to the front document / active sheet / first table, so
 they work on whatever is on screen without ceremony.
@@ -104,7 +109,9 @@ formulas, and asks before saving.
 
 - No cell formatting (currency styles, colors) — Numbers' AppleScript
   dictionary barely exposes styling. Planned via UI scripting.
-- Rows/columns append at the end only (insert-at-index not yet implemented).
+- **Sheet duplication and reordering are not possible** — Numbers' scripting
+  refuses to copy a sheet (error -1717) or `move` a sheet (-10000). New
+  sheets via `numbers_add_sheet` start blank and append at the end.
 - No chart creation.
 - Tested on Numbers 15.x / macOS 15.
 
