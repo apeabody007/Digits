@@ -1,5 +1,7 @@
 # Digits — connect Claude to Apple Numbers
 
+![Digits demo — asking Claude to fill in a budget, watching the Numbers sheet populate live](assets/demo.gif)
+
 Talk to your spreadsheets. Digits is a **zero-dependency** MCP server that
 lets Claude read and edit live Apple Numbers documents — cells, formulas,
 rows, sheets — packaged as a Claude plugin with a bundled **budget-review**
